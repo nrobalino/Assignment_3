@@ -39,19 +39,11 @@ library(nngeo)
 
 ```{r}
 parks <- st_read("Parks.geojson")
-```
-
-
-```{r}
 township <- st_read("Township.geojson")
-```
-```{r}
 office <- st_read("House_office.geojson")
-```
-
-```{r}
 busstop <- st_read("Bus_stops.geojson")
 ```
+
 ```{r}
 capetown_city_plane <-"+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs"
 
@@ -76,13 +68,99 @@ ggplot(parks)+
   geom_sf(data = office, color = "firebrick4", alpha = 0.8, size = 0.5)
   theme_map()
 ```
+
+
 ```{r}
 ggplot(township) +
   geom_sf(fill = NA, color = "lightcoral") +
-  geom_sf(data = parks, fill = "darkgreen", color = NA) +
+  geom_sf(data = parks, fill = "darkseagreen", color = NA) +
   geom_sf(data = busstop, color = "plum2", size = 0.1) +
-  geom_sf(data = office, color = "lightblue2", size = 0.5) +
+  geom_sf(data = office, color = "lightblue2", size = 0.003) +
   theme_map() +
   annotation_scale()
 ```
- 
+
+```{r}
+park_buffer <- st_buffer(parks, dist = 100) %>%
+  st_union()
+ggplot(park_buffer) +
+  geom_sf(size =1) +
+  theme_map()
+  annotation_scale()
+```
+```{r}
+busstop_park <- busstop[park_buffer,]
+```  
+```{r}
+ggplot(park_buffer) +
+  geom_sf(aes(fill = "Park Buffer Zone"), size = 3, color =NA) +
+  geom_sf(data = busstop_park, aes(color = "Bus Stop within 100 m of Park"), size = 0.01)+
+  scale_fill_manual(values = "gray50", name = "") +
+  scale_color_manual(values = c("darkseagreen"), name = "") +
+  theme_map()
+```
+
+```{r}
+busstop_1 <- busstop %>%
+  st_join(busstop_park) %>%
+  mutate(by_park = !is.na(NAME.y))
+```
+
+```{r}
+n_parks_busstop <- sum(busstop$by_park)
+
+n_parks_busstop
+```
+
+
+```{r}
+n_busstop <- length(busstop$by_park)
+
+pct_parks_busstop <- n_parks_busstop / n_busstop
+
+pct_parks_busstop
+```
+```{r}
+left_side  <- st_bbox(busstop)$xmin
+top_side <- st_bbox(busstop)$ymax
+
+ggplot() +
+  geom_sf() +
+  geom_sf(data = busstop, size = 0.01,
+          aes(color = by_park)) +
+  scale_color_manual(values = c("lightgreen", "darkgreen"),
+          name = "Cape Town Bus stops\nby distance to a park", 
+          labels = c("No park within 30 m",
+                     "Park within 30 m")) +
+  annotation_scale(location = "br") +
+  annotation_north_arrow(location = "tr",
+                         style = north_arrow_minimal()) +
+  annotate(geom = "text", x = left_side, 
+           y = top_side, 
+           label = paste("Of the ", 
+                         prettyNum(n_busstop, big.mark = ","),
+                         " Bus stops in Cape Town\n", 
+                         prettyNum(n_parks_busstop, big.mark = ","),
+                         " (", 
+                         prettyNum(100*pct_parks_busstop, digits = 0),
+                         "%) are within 30\nmeters of a park.",
+                         sep = ""),
+           hjust = 0, vjust = 0, size = 3) +
+  theme_map() +
+  theme(panel.background = element_rect(fill = "cornsilk1"),
+        legend.background = element_rect(fill = alpha("white", 0.5), 
+                                         color = "gray"))
+```
+```{r}
+  ggplot(park_buffer) +
+    annotation_map_tile(zoomin = 0, progress = "none", type = "stamenbw")  +
+     geom_sf() +
+  labs(caption = "Map tiles by Stamen Design. Data by OpenStreetMap")+
+  geom_sf(aes(fill = "Park Buffer Zone"), size = 3, color =NA) +
+  geom_sf(data = busstop_park, aes(color = "Bus Stop within 100 m of Park"), size = 0.01)+
+  scale_fill_manual(values = "gray50", name = "") +
+  scale_color_manual(values = c("darkseagreen"), name = "") +
+  theme_map()+
+  theme(legend.position = "right")
+```
+
