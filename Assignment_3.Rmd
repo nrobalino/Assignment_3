@@ -26,3 +26,63 @@ plot(pressure)
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+library(sf)
+library(tidyverse)
+library(ggthemes)
+library(ggspatial)
+library(units)
+library(nngeo)
+```
+
+
+```{r}
+parks <- st_read("Parks.geojson")
+```
+
+
+```{r}
+township <- st_read("Township.geojson")
+```
+```{r}
+office <- st_read("House_office.geojson")
+```
+
+```{r}
+busstop <- st_read("Bus_stops.geojson")
+```
+```{r}
+capetown_city_plane <-"+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs"
+
+busstop <- busstop %>%
+  st_transform(capetown_city_plane)
+
+office <- office %>%
+  st_transform(capetown_city_plane)
+
+parks <- parks %>%
+  st_transform(capetown_city_plane)
+
+township <- township %>%
+  st_transform(capetown_city_plane)
+```
+
+```{r}
+ggplot(parks)+
+  geom_sf(size = 0.5, color = "darkgreen", alpha = 0.5) +
+  geom_sf(data = township, color = "darkblue", size = 0.5)+
+  geom_sf(data = busstop, alpha = 0.5, size = 0.2, color = "gray50")+
+  geom_sf(data = office, color = "firebrick4", alpha = 0.8, size = 0.5)
+  theme_map()
+```
+```{r}
+ggplot(township) +
+  geom_sf(fill = NA, color = "lightcoral") +
+  geom_sf(data = parks, fill = "darkgreen", color = NA) +
+  geom_sf(data = busstop, color = "plum2", size = 0.1) +
+  geom_sf(data = office, color = "lightblue2", size = 0.5) +
+  theme_map() +
+  annotation_scale()
+```
+ 
