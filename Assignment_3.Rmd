@@ -84,9 +84,13 @@ ggplot(township) +
 park_buffer <- st_buffer(parks, dist = 100) %>%
   st_union()
 ggplot(park_buffer) +
-  geom_sf(size =1) +
-  theme_map()
-  annotation_scale()
+  annotation_map_tile(zoomin = 0, progress = "none", type = "stamenbw")  +
+  geom_sf() +
+  labs(caption = "Map tiles by Stamen Design. Data by OpenStreetMap")+
+  geom_sf(aes(fill = "Park Buffer Zone"), size =1, color = NA) +
+  scale_fill_manual(values = "darkseagreen", name = "") +
+  theme_map()+
+  theme(legend.position = "right")
 ```
 ```{r}
 busstop_park <- busstop[park_buffer,]
@@ -120,37 +124,7 @@ pct_parks_busstop <- n_parks_busstop / n_busstop
 
 pct_parks_busstop
 ```
-```{r}
-left_side  <- st_bbox(busstop)$xmin
-top_side <- st_bbox(busstop)$ymax
 
-ggplot() +
-  geom_sf() +
-  geom_sf(data = busstop, size = 0.01,
-          aes(color = by_park)) +
-  scale_color_manual(values = c("lightgreen", "darkgreen"),
-          name = "Cape Town Bus stops\nby distance to a park", 
-          labels = c("No park within 30 m",
-                     "Park within 30 m")) +
-  annotation_scale(location = "br") +
-  annotation_north_arrow(location = "tr",
-                         style = north_arrow_minimal()) +
-  annotate(geom = "text", x = left_side, 
-           y = top_side, 
-           label = paste("Of the ", 
-                         prettyNum(n_busstop, big.mark = ","),
-                         " Bus stops in Cape Town\n", 
-                         prettyNum(n_parks_busstop, big.mark = ","),
-                         " (", 
-                         prettyNum(100*pct_parks_busstop, digits = 0),
-                         "%) are within 30\nmeters of a park.",
-                         sep = ""),
-           hjust = 0, vjust = 0, size = 3) +
-  theme_map() +
-  theme(panel.background = element_rect(fill = "cornsilk1"),
-        legend.background = element_rect(fill = alpha("white", 0.5), 
-                                         color = "gray"))
-```
 ```{r}
   ggplot(park_buffer) +
     annotation_map_tile(zoomin = 0, progress = "none", type = "stamenbw")  +
@@ -158,9 +132,10 @@ ggplot() +
   labs(caption = "Map tiles by Stamen Design. Data by OpenStreetMap")+
   geom_sf(aes(fill = "Park Buffer Zone"), size = 3, color =NA) +
   geom_sf(data = busstop_park, aes(color = "Bus Stop within 100 m of Park"), size = 0.01)+
-  scale_fill_manual(values = "gray50", name = "") +
-  scale_color_manual(values = c("darkseagreen"), name = "") +
+  scale_fill_manual(values = "darkseagreen", name = "") +
+  scale_color_manual(values = c("firebrick4"), name = "") +
   theme_map()+
   theme(legend.position = "right")
 ```
+
 
